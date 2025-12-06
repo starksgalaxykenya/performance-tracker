@@ -6,15 +6,19 @@
 }
 
 body {
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter', sans-serif; /* Using the imported Inter font */
     margin: 0;
     background-color: var(--light-bg);
     color: var(--text-color);
-    transition: background-color 0.3s;
 }
 
 .brand-color {
     color: var(--brand-color);
+}
+
+/* Global Utilities */
+.hidden {
+    display: none !important;
 }
 
 /* Authentication Styling */
@@ -34,6 +38,7 @@ input[type="email"], input[type="password"] {
     margin-bottom: 15px;
     border: 1px solid #ccc;
     border-radius: 4px;
+    box-sizing: border-box; /* Ensures padding doesn't affect width */
 }
 
 .btn {
@@ -47,11 +52,7 @@ input[type="email"], input[type="password"] {
 }
 
 .btn:hover {
-    background-color: #1f601b; /* Darker shade of brand color */
-}
-
-.hidden {
-    display: none !important;
+    background-color: #1f601b; /* Darker shade of brand color for hover */
 }
 
 /* Dashboard Layout */
@@ -71,11 +72,12 @@ header {
 .kanban-board {
     display: flex;
     gap: 20px;
-    overflow-x: auto;
+    overflow-x: auto; /* Allows horizontal scrolling for many columns */
+    padding-bottom: 10px;
 }
 
 .kanban-column {
-    min-width: 280px;
+    min-width: 300px;
     flex-shrink: 0;
     background-color: #e8e8e8;
     padding: 15px;
@@ -110,6 +112,7 @@ header {
 
 .deal-card p {
     margin: 5px 0;
+    line-height: 1.4;
 }
 
 /* Sticky Notes Area */
@@ -129,4 +132,5 @@ header {
     border-radius: 4px;
     resize: vertical;
     margin-bottom: 10px;
+    box-sizing: border-box;
 }
