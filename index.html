@@ -58,29 +58,36 @@
     </div>
 
     <script type="module">
-        // Import Firebase SDKs (using your provided version 12.6.0)
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
-        import { getFirestore, collection, doc, setDoc, getDoc, query, where, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
+    // Import Firebase SDKs
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
+    // IMPORT ALL NECESSARY AUTH FUNCTIONS HERE
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
+    // IMPORT ALL NECESSARY FIRESTORE FUNCTIONS HERE
+    import { getFirestore, collection, doc, setDoc, getDoc, query, where, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
 
-        // Your web app's Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyDJ5pRskxuT4bo43J2dr73t3VPlFo5RFbA",
-            authDomain: "performance-tracker-f8c9b.firebaseapp.com",
-            projectId: "performance-tracker-f8c9b",
-            storageBucket: "performance-tracker-f8c9b.firebasestorage.app",
-            messagingSenderId: "385942941204",
-            appId: "1:385942941204:web:a845950b98f0a58e6a8101"
-        };
+    // Your web app's Firebase configuration
+    const firebaseConfig = {
+        // ... (your config object) ...
+    };
 
-        // Initialize Firebase app and services
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+    // Initialize Firebase app and services
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
 
-        // Import and run your main application logic
-        import { setupApp } from "./script.js";
-        setupApp(auth, db, serverTimestamp);
-    </script>
+    // Import main application logic
+    import { setupApp } from "./script.js";
+    
+    // PASS ALL REQUIRED FUNCTIONS AND SERVICES TO setupApp
+    setupApp(
+        auth, db, serverTimestamp, 
+        { 
+            signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut 
+        }, 
+        { 
+            collection, doc, setDoc, getDoc, query, where, onSnapshot 
+        }
+    );
+</script>
 </body>
 </html>
