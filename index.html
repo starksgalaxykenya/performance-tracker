@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Performance Tracker</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="login-container" class="auth-container">
+        </div>
+
+    <div id="signup-container" class="auth-container hidden">
+        </div>
+
+    <div id="dashboard-container" class="hidden">
+        </div>
+
+    <script type="module">
+        // 1. YOUR FIREBASE CONFIGURATION & INITIALIZATION
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
+        
+        // Import Auth and Firestore services needed
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, getDoc, query, where, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDJ5pRskxuT4bo43J2dr73t3VPlFo5RFbA",
+            authDomain: "performance-tracker-f8c9b.firebaseapp.com",
+            projectId: "performance-tracker-f8c9b",
+            storageBucket: "performance-tracker-f8c9b.firebasestorage.app",
+            messagingSenderId: "385942941204",
+            appId: "1:385942941204:web:a845950b98f0a58e6a8101"
+        };
+
+        // Initialize Firebase app and services
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // 2. Import and run your main application logic
+        import { setupApp } from "./script.js";
+        setupApp(auth, db, serverTimestamp);
+    </script>
+</body>
+</html>
