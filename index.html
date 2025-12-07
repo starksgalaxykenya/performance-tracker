@@ -96,20 +96,25 @@
             
         </main>
 
-        <aside class="sticky-notes-area">
-            <h4>Notes</h4>
-            <textarea id="sticky-note-input" placeholder="Quick notes for this session..."></textarea>
-            <button id="save-note-btn" class="btn">Save Note</button>
-        </aside>
+        <div class="secondary-panels-group">
+            <aside class="sticky-notes-area">
+                <h4>Session Notes</h4>
+                <textarea id="sticky-note-input" placeholder="Write a new sticky note..."></textarea>
+                <button id="save-note-btn" class="btn">Add Note</button>
+                
+                <div id="session-notes-container" class="notes-container">
+                    </div>
+            </aside>
 
-        <div class="dashboard-panel">
-            <h3>To-Do List</h3>
-            <div class="input-group">
-                <input type="text" id="new-todo-input" placeholder="Add new task">
-                <button id="add-todo-btn" class="btn btn-small">Add</button>
+            <div class="dashboard-panel todo-panel">
+                <h3>To-Do List</h3>
+                <div class="input-group">
+                    <input type="text" id="new-todo-input" placeholder="Add new task">
+                    <button id="add-todo-btn" class="btn btn-small">Add</button>
+                </div>
+                <ul id="todo-list" class="list-unstyled">
+                </ul>
             </div>
-            <ul id="todo-list" class="list-unstyled">
-            </ul>
         </div>
 
     </div>
@@ -122,11 +127,14 @@
         <input type="hidden" id="deal-initial-status" value="Prospective">
         
         <input type="text" id="deal-client-name" placeholder="Client Name" required>
-        <input type="text" id="deal-client-phone" placeholder="Client Phone Number (Optional)"> <input type="text" id="deal-car-model" placeholder="Car Model (e.g., Civic, F-150)" required>
+        <input type="text" id="deal-client-phone" placeholder="Client Phone Number (Optional)"> 
+        <input type="text" id="deal-car-model" placeholder="Car Model (e.g., Civic, F-150)" required>
         <input type="number" id="deal-car-year" placeholder="Year of Manufacture (e.g., 2023)" required>
         <input type="text" id="deal-car-color" placeholder="Car Color" required>
         <input type="number" id="deal-value" placeholder="Budget/Deal Value ($)" required> 
         <input type="number" id="deal-deposit" placeholder="Deposit Amount (USD) (Optional)" value="0">
+        
+        <textarea id="deal-notes" placeholder="Deal-specific notes or key contact details..."></textarea>
         
         <button id="submit-deal-btn" class="btn">Save Deal</button>
         <button id="cancel-deal-btn" class="btn" style="background-color: #999; margin-top: 10px;">Cancel</button>
