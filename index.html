@@ -38,6 +38,21 @@
         <div id="chart-section">
             <canvas id="deal-status-chart"></canvas>
         </div>
+        <div class="summary-and-chart-container">
+    <div id="dashboard-summary" class="summary-panel">
+        <h3>Total Metrics</h3>
+        <p>Total Deals: <strong id="total-deals-count">0</strong></p>
+        <p>Total Deal Value: <strong id="total-deals-value">$0</strong></p>
+        <p>Closed-Won Deals: <strong id="closed-deals-count">0</strong></p>
+        <p>Total Closed Value: <strong id="total-closed-value">$0</strong></p>
+    </div>
+    
+    <div class="chart-container">
+        <canvas id="deal-status-chart"></canvas>
+    </div>
+</div>
+
+        
 
         <main class="kanban-board">
             
@@ -76,6 +91,8 @@
                 <div class="deal-list" data-status="Closed-Won"></div>
                 <button class="btn btn-add-column" data-status="Closed-Won">➕ Add Deal</button>
             </div>
+
+            
         </main>
 
         <aside class="sticky-notes-area">
@@ -85,6 +102,15 @@
         </aside>
 
     </div>
+    <div class="dashboard-panel">
+    <h3>To-Do List</h3>
+    <div class="input-group">
+        <input type="text" id="new-todo-input" placeholder="Add new task">
+        <button id="add-todo-btn" class="btn btn-small">Add</button>
+    </div>
+    <ul id="todo-list" class="list-unstyled">
+        </ul>
+</div>
     
     <div id="modal-backdrop" class="modal-backdrop hidden"></div>
 
@@ -127,6 +153,60 @@
             <button id="close-deal-list-modal" class="btn" style="background-color: #999; margin-top: 20px;">Close</button>
         </div>
     </div>
+
+    <div id="weekly-report-modal" class="modal-content hidden">
+    <h2>Weekly Performance Report</h2>
+    <textarea id="report-text" rows="10" placeholder="Enter your weekly summary and insights here..."></textarea>
+    <div class="modal-actions">
+        <button id="send-report-btn" class="btn">Send Report via Email</button>
+        <button id="cancel-report-btn" class="btn btn-secondary">Cancel</button>
+    </div>
+</div>
+
+    <div id="calculator-modal" class="modal-content hidden">
+    <h2>Currency Converter & Calculator</h2>
+    
+    <div class="calculator-display">
+        <input type="text" id="calc-display" value="0" readonly>
+    </div>
+    <div class="calculator-grid">
+        <button class="calc-btn" data-input="C">C</button>
+        <button class="calc-btn" data-input="/">/</button>
+        <button class="calc-btn" data-input="*">*</button>
+        <button class="calc-btn" data-input="<">DEL</button>
+        <button class="calc-btn" data-input="7">7</button>
+        <button class="calc-btn" data-input="8">8</button>
+        <button class="calc-btn" data-input="9">9</button>
+        <button class="calc-btn" data-input="-">-</button>
+        <button class="calc-btn" data-input="4">4</button>
+        <button class="calc-btn" data-input="5">5</button>
+        <button class="calc-btn" data-input="6">6</button>
+        <button class="calc-btn" data-input="+">+</button>
+        <button class="calc-btn" data-input="1">1</button>
+        <button class="calc-btn" data-input="2">2</button>
+        <button class="calc-btn" data-input="3">3</button>
+        <button class="calc-btn" data-input="=" class="equals">=</button>
+        <button class="calc-btn" data-input="0" class="zero">0</button>
+        <button class="calc-btn" data-input=".">.</button>
+    </div>
+
+    <hr>
+    
+    <h3>Currency Conversion</h3>
+    <div class="conversion-section">
+        <input type="number" id="base-amount" placeholder="Amount (USD)">
+        <input type="number" id="conversion-rate" placeholder="Conversion Rate (e.g., 120)">
+        <p>Converted Amount: <strong id="converted-amount">0.00</strong></p>
+        <button id="convert-btn" class="btn">Convert</button>
+    </div>
+
+    <button id="cancel-calc-btn" class="btn btn-secondary">Close Calculator</button>
+</div>
+
+<div class="dashboard-actions">
+    <button id="open-report-btn" class="btn">Weekly Report</button>
+    <button id="open-calculator-btn" class="btn">Calculator</button>
+</div>
 
 
     <script type="module">
