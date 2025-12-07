@@ -309,7 +309,7 @@ header {
 }
 
 .summary-panel {
-    flex: 1;
+    flex: 1.5; /* INCREASED SIZE to 1.5 parts */
     background-color: var(--card-bg);
     padding: 20px;
     border-radius: 6px;
@@ -328,7 +328,7 @@ header {
 }
 
 .chart-container {
-    flex: 2;
+    flex: 1; /* REDUCED SIZE to 1 part */
     background-color: var(--card-bg);
     padding: 20px;
     border-radius: 6px;
