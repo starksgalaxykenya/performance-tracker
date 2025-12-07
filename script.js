@@ -60,7 +60,7 @@ const statusColors = {
 
 
 // -------------------------------------------------------------------
-// --- AUTHENTICATION HANDLERS (MOVED TO THE TOP TO FIX REFERENCE ERROR) ---
+// --- AUTHENTICATION HANDLERS ---
 // -------------------------------------------------------------------
 
 async function handleLogin() {
@@ -265,6 +265,7 @@ function showAddDealForm(initialStatus, dealData = null) {
     
     document.getElementById('deal-doc-id').value = dealData ? dealData.id : '';
     document.getElementById('deal-client-name').value = dealData ? dealData.clientName : '';
+    document.getElementById('deal-client-phone').value = dealData ? dealData.clientPhone : ''; // 🌟 UPDATED: Load phone number
     document.getElementById('deal-car-model').value = dealData ? dealData.carModel : '';
     document.getElementById('deal-car-year').value = dealData ? dealData.carYear : '';
     document.getElementById('deal-car-color').value = dealData ? dealData.carColor : '';
@@ -291,6 +292,7 @@ function hideAddDealForm() {
 async function createOrUpdateDeal() {
     const docId = document.getElementById('deal-doc-id').value;
     const clientName = document.getElementById('deal-client-name').value.trim();
+    const clientPhone = document.getElementById('deal-client-phone').value.trim(); // 🌟 UPDATED: Get phone number
     const carModel = document.getElementById('deal-car-model').value.trim();
     const carYear = document.getElementById('deal-car-year').value.trim();
     const carColor = document.getElementById('deal-car-color').value.trim();
@@ -312,6 +314,7 @@ async function createOrUpdateDeal() {
     const dealData = {
         userId: currentUserId,
         clientName: clientName,
+        clientPhone: clientPhone, // 🌟 UPDATED: Save phone number
         carModel: carModel,
         carYear: parseInt(carYear),
         carColor: carColor,
@@ -450,8 +453,10 @@ async function handleDrop(e) {
 // -------------------------------------------------------------------
 
 function initializeChart() {
-    const ctx = document.getElementById('deal-status-chart').getContext('2d');
+    const ctx = document.getElementById('deal-status-chart')?.getContext('2d');
     
+    if (!ctx) return; 
+
     if (dealStatusChart) {
         dealStatusChart.destroy(); 
     }
@@ -468,6 +473,7 @@ function initializeChart() {
         },
         options: {
             responsive: true,
+            maintainAspectRatio: false, // Allows height to be controlled by CSS/container
             plugins: {
                 legend: {
                     position: 'bottom',
