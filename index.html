@@ -34,11 +34,6 @@
                 <button id="logout-btn" class="btn">Logout</button>
             </div>
         </header>
-
-        <div class="dashboard-actions">
-            <button id="open-report-btn" class="btn">Weekly Report</button>
-            <button id="open-calculator-btn" class="btn">Calculator</button>
-        </div>
         
         <div class="summary-and-chart-container">
             <div id="dashboard-summary" class="summary-panel">
@@ -53,6 +48,12 @@
                 <canvas id="deal-status-chart"></canvas>
             </div>
         </div>
+        
+        <div class="dashboard-actions">
+            <button id="open-report-btn" class="btn">Weekly Report</button>
+            <button id="open-calculator-btn" class="btn">Calculator</button>
+        </div>
+        
 
         <main class="kanban-board">
             
@@ -92,26 +93,25 @@
                 <button class="btn btn-add-column" data-status="Closed-Won">➕ Add Deal</button>
             </div>
 
+            
         </main>
 
-        <div class="secondary-panels-group">
-            <aside class="sticky-notes-area">
-                <h4>Notes</h4>
-                <textarea id="sticky-note-input" placeholder="Quick notes for this session..."></textarea>
-                <button id="save-note-btn" class="btn">Save Note</button>
-            </aside>
-            
-            <div class="dashboard-panel todo-panel">
-                <h3>To-Do List</h3>
-                <div class="input-group">
-                    <input type="text" id="new-todo-input" placeholder="Add new task">
-                    <button id="add-todo-btn" class="btn btn-small">Add</button>
-                </div>
-                <ul id="todo-list" class="list-unstyled">
-                    </ul>
+        <aside class="sticky-notes-area">
+            <h4>Notes</h4>
+            <textarea id="sticky-note-input" placeholder="Quick notes for this session..."></textarea>
+            <button id="save-note-btn" class="btn">Save Note</button>
+        </aside>
+
+        <div class="dashboard-panel">
+            <h3>To-Do List</h3>
+            <div class="input-group">
+                <input type="text" id="new-todo-input" placeholder="Add new task">
+                <button id="add-todo-btn" class="btn btn-small">Add</button>
             </div>
+            <ul id="todo-list" class="list-unstyled">
+            </ul>
         </div>
-        
+
     </div>
     
     <div id="modal-backdrop" class="modal-backdrop hidden"></div>
@@ -122,7 +122,7 @@
         <input type="hidden" id="deal-initial-status" value="Prospective">
         
         <input type="text" id="deal-client-name" placeholder="Client Name" required>
-        <input type="text" id="deal-car-model" placeholder="Car Model (e.g., Civic, F-150)" required>
+        <input type="text" id="deal-client-phone" placeholder="Client Phone Number (Optional)"> <input type="text" id="deal-car-model" placeholder="Car Model (e.g., Civic, F-150)" required>
         <input type="number" id="deal-car-year" placeholder="Year of Manufacture (e.g., 2023)" required>
         <input type="text" id="deal-car-color" placeholder="Car Color" required>
         <input type="number" id="deal-value" placeholder="Budget/Deal Value ($)" required> 
@@ -135,7 +135,8 @@
     <div id="move-deal-modal" class="auth-container hidden">
         <h2>Move Deal to New Stage</h2>
         <p>Select the new status for this deal:</p>
-        <div id="status-buttons-container" class="status-buttons"></div>
+        <div id="status-buttons-container" class="status-buttons">
+            </div>
         <input type="hidden" id="deal-to-move-id">
         <button id="cancel-move-btn" class="btn" style="background-color: #999; margin-top: 20px;">Cancel</button>
     </div>
@@ -144,73 +145,74 @@
         <div class="auth-container" style="max-width: 600px; padding: 20px;">
             <h2 id="deal-list-modal-title">Deals</h2>
             <input type="text" id="deal-search-input" placeholder="Search client name or car model...">
-            <div id="deals-list-body" style="max-height: 400px; overflow-y: auto;"></div>
+            <div id="deals-list-body" style="max-height: 400px; overflow-y: auto;">
+                </div>
             <button id="close-deal-list-modal" class="btn" style="background-color: #999; margin-top: 20px;">Close</button>
         </div>
     </div>
 
     <div id="weekly-report-modal" class="modal-content hidden">
-        <h2>Weekly Performance Report</h2>
-        <textarea id="report-text" rows="10" placeholder="Enter your weekly summary and insights here..."></textarea>
-        <div class="modal-actions">
-            <button id="send-report-btn" class="btn">Send Report via Email</button>
-            <button id="cancel-report-btn" class="btn btn-secondary">Cancel</button>
-        </div>
+    <h2>Weekly Performance Report</h2>
+    <textarea id="report-text" rows="10" placeholder="Enter your weekly summary and insights here..."></textarea>
+    <div class="modal-actions">
+        <button id="send-report-btn" class="btn">Send Report via Email</button>
+        <button id="cancel-report-btn" class="btn btn-secondary">Cancel</button>
     </div>
+</div>
 
     <div id="calculator-modal" class="modal-content hidden">
-        <h2>Currency Converter & Calculator</h2>
-        
-        <div class="calculator-display">
-            <input type="text" id="calc-display" value="0" readonly>
-        </div>
-        <div class="calculator-grid">
-            <button class="calc-btn" data-input="C">C</button>
-            <button class="calc-btn" data-input="/">/</button>
-            <button class="calc-btn" data-input="*">*</button>
-            <button class="calc-btn" data-input="<">DEL</button>
-            <button class="calc-btn" data-input="7">7</button>
-            <button class="calc-btn" data-input="8">8</button>
-            <button class="calc-btn" data-input="9">9</button>
-            <button class="calc-btn" data-input="-">-</button>
-            <button class="calc-btn" data-input="4">4</button>
-            <button class="calc-btn" data-input="5">5</button>
-            <button class="calc-btn" data-input="6">6</button>
-            <button class="calc-btn" data-input="+">+</button>
-            <button class="calc-btn" data-input="1">1</button>
-            <button class="calc-btn" data-input="2">2</button>
-            <button class="calc-btn" data-input="3">3</button>
-            <button class="calc-btn" data-input="=" class="equals">=</button>
-            <button class="calc-btn" data-input="0" class="zero">0</button>
-            <button class="calc-btn" data-input=".">.</button>
-        </div>
-
-        <hr>
-        
-        <h3>Currency Conversion</h3>
-        <div class="conversion-section">
-            <input type="number" id="base-amount" placeholder="Amount (USD)">
-            <input type="number" id="conversion-rate" placeholder="Conversion Rate (e.g., 120)">
-            <p>Converted Amount: <strong id="converted-amount">0.00</strong></p>
-            <button id="convert-btn" class="btn">Convert</button>
-        </div>
-
-        <button id="cancel-calc-btn" class="btn btn-secondary">Close Calculator</button>
+    <h2>Currency Converter & Calculator</h2>
+    
+    <div class="calculator-display">
+        <input type="text" id="calc-display" value="0" readonly>
     </div>
+    <div class="calculator-grid">
+        <button class="calc-btn" data-input="C">C</button>
+        <button class="calc-btn" data-input="/">/</button>
+        <button class="calc-btn" data-input="*">*</button>
+        <button class="calc-btn" data-input="<">DEL</button>
+        <button class="calc-btn" data-input="7">7</button>
+        <button class="calc-btn" data-input="8">8</button>
+        <button class="calc-btn" data-input="9">9</button>
+        <button class="calc-btn" data-input="-">-</button>
+        <button class="calc-btn" data-input="4">4</button>
+        <button class="calc-btn" data-input="5">5</button>
+        <button class="calc-btn" data-input="6">6</button>
+        <button class="calc-btn" data-input="+">+</button>
+        <button class="calc-btn" data-input="1">1</button>
+        <button class="calc-btn" data-input="2">2</button>
+        <button class="calc-btn" data-input="3">3</button>
+        <button class="calc-btn" data-input="=" class="equals">=</button>
+        <button class="calc-btn" data-input="0" class="zero">0</button>
+        <button class="calc-btn" data-input=".">.</button>
+    </div>
+
+    <hr>
+    
+    <h3>Currency Conversion</h3>
+    <div class="conversion-section">
+        <input type="number" id="base-amount" placeholder="Amount (USD)">
+        <input type="number" id="conversion-rate" placeholder="Conversion Rate (e.g., 120)">
+        <p>Converted Amount: <strong id="converted-amount">0.00</strong></p>
+        <button id="convert-btn" class="btn">Convert</button>
+    </div>
+
+    <button id="cancel-calc-btn" class="btn btn-secondary">Close Calculator</button>
+</div>
 
 
     <script type="module">
     // Import the functions you need from the SDKs
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
-    import { getFirestore, collection, doc, setDoc, getDoc, query, where, onSnapshot, serverTimestamp, orderBy, deleteDoc } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js"; // Added orderBy, deleteDoc for To-Do
+    import { getFirestore, collection, doc, setDoc, getDoc, query, where, onSnapshot, serverTimestamp, deleteDoc, orderBy } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
 
     // Your web app's Firebase configuration
     const firebaseConfig = {
       apiKey: "AIzaSyDJ5pRskxuT4bo43J2dr73t3VPlFo5RFbA",
       authDomain: "performance-tracker-f8c9b.firebaseapp.com",
       projectId: "performance-tracker-f8c9b",
-      storageBucket: "performance-tracker-f8c9b.firebase-storage.app",
+      storageBucket: "performance-tracker-f8c9b.firebasestorage.app",
       messagingSenderId: "385942941204",
       appId: "1:385942941204:web:a845950b98f0a58e6a8101"
     };
@@ -230,8 +232,8 @@
         serverTimestamp, 
         // Bundled Auth Functions
         { signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut },
-        // Bundled Firestore Functions (Ensure all needed functions are passed)
-        { collection, doc, setDoc, getDoc, query, where, onSnapshot, orderBy, deleteDoc } 
+        // Bundled Firestore Functions
+        { collection, doc, setDoc, getDoc, query, where, onSnapshot, deleteDoc, orderBy }
     );
     </script>
 </body>
