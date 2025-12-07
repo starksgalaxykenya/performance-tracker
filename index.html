@@ -95,7 +95,7 @@
 
             
         </main>
-
+        
         <div class="secondary-panels-group">
             <aside class="sticky-notes-area">
                 <h4>Session Notes</h4>
@@ -160,59 +160,60 @@
     </div>
 
     <div id="weekly-report-modal" class="modal-content hidden">
-    <h2>Weekly Performance Report</h2>
-    <textarea id="report-text" rows="10" placeholder="Enter your weekly summary and insights here..."></textarea>
-    <div class="modal-actions">
-        <button id="send-report-btn" class="btn">Send Report via Email</button>
-        <button id="cancel-report-btn" class="btn btn-secondary">Cancel</button>
+        <h2>Weekly Performance Report</h2>
+        <textarea id="report-text" rows="10" placeholder="Enter your weekly summary and insights here..."></textarea>
+        <div class="modal-actions">
+            <button id="send-report-btn" class="btn">Send Report via Email</button>
+            <button id="cancel-report-btn" class="btn btn-secondary">Cancel</button>
+        </div>
     </div>
-</div>
 
     <div id="calculator-modal" class="modal-content hidden">
-    <h2>Currency Converter & Calculator</h2>
-    
-    <div class="calculator-display">
-        <input type="text" id="calc-display" value="0" readonly>
-    </div>
-    <div class="calculator-grid">
-        <button class="calc-btn" data-input="C">C</button>
-        <button class="calc-btn" data-input="/">/</button>
-        <button class="calc-btn" data-input="*">*</button>
-        <button class="calc-btn" data-input="<">DEL</button>
-        <button class="calc-btn" data-input="7">7</button>
-        <button class="calc-btn" data-input="8">8</button>
-        <button class="calc-btn" data-input="9">9</button>
-        <button class="calc-btn" data-input="-">-</button>
-        <button class="calc-btn" data-input="4">4</button>
-        <button class="calc-btn" data-input="5">5</button>
-        <button class="calc-btn" data-input="6">6</button>
-        <button class="calc-btn" data-input="+">+</button>
-        <button class="calc-btn" data-input="1">1</button>
-        <button class="calc-btn" data-input="2">2</button>
-        <button class="calc-btn" data-input="3">3</button>
-        <button class="calc-btn" data-input="=" class="equals">=</button>
-        <button class="calc-btn" data-input="0" class="zero">0</button>
-        <button class="calc-btn" data-input=".">.</button>
-    </div>
+        <h2>Currency Converter & Calculator</h2>
+        
+        <div class="calculator-display">
+            <input type="text" id="calc-display" value="0" readonly>
+        </div>
+        <div class="calculator-grid">
+            <button class="calc-btn" data-input="C">C</button>
+            <button class="calc-btn" data-input="/">/</button>
+            <button class="calc-btn" data-input="*">*</button>
+            <button class="calc-btn" data-input="<">DEL</button>
+            <button class="calc-btn" data-input="7">7</button>
+            <button class="calc-btn" data-input="8">8</button>
+            <button class="calc-btn" data-input="9">9</button>
+            <button class="calc-btn" data-input="-">-</button>
+            <button class="calc-btn" data-input="4">4</button>
+            <button class="calc-btn" data-input="5">5</button>
+            <button class="calc-btn" data-input="6">6</button>
+            <button class="calc-btn" data-input="+">+</button>
+            <button class="calc-btn" data-input="1">1</button>
+            <button class="calc-btn" data-input="2">2</button>
+            <button class="calc-btn" data-input="3">3</button>
+            <button class="calc-btn" data-input="=" class="equals">=</button>
+            <button class="calc-btn" data-input="0" class="zero">0</button>
+            <button class="calc-btn" data-input=".">.</button>
+        </div>
 
-    <hr>
-    
-    <h3>Currency Conversion</h3>
-    <div class="conversion-section">
-        <input type="number" id="base-amount" placeholder="Amount (USD)">
-        <input type="number" id="conversion-rate" placeholder="Conversion Rate (e.g., 120)">
-        <p>Converted Amount: <strong id="converted-amount">0.00</strong></p>
-        <button id="convert-btn" class="btn">Convert</button>
-    </div>
+        <hr>
+        
+        <h3>Currency Conversion</h3>
+        <div class="conversion-section">
+            <input type="number" id="base-amount" placeholder="Amount (USD)">
+            <input type="number" id="conversion-rate" placeholder="Conversion Rate (e.g., 120)">
+            <p>Converted Amount: <strong id="converted-amount">0.00</strong></p>
+            <button id="convert-btn" class="btn">Convert</button>
+        </div>
 
-    <button id="cancel-calc-btn" class="btn btn-secondary">Close Calculator</button>
-</div>
+        <button id="cancel-calc-btn" class="btn btn-secondary">Close Calculator</button>
+    </div>
 
 
     <script type="module">
     // Import the functions you need from the SDKs
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
+    // UPDATED: Added deleteDoc and orderBy for complete To-Do/Notes functionality
     import { getFirestore, collection, doc, setDoc, getDoc, query, where, onSnapshot, serverTimestamp, deleteDoc, orderBy } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
 
     // Your web app's Firebase configuration
@@ -240,7 +241,7 @@
         serverTimestamp, 
         // Bundled Auth Functions
         { signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut },
-        // Bundled Firestore Functions
+        // Bundled Firestore Functions (UPDATED)
         { collection, doc, setDoc, getDoc, query, where, onSnapshot, deleteDoc, orderBy }
     );
     </script>
