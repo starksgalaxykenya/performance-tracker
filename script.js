@@ -1,5 +1,3 @@
-// ... (Keep existing code from line 1 up to setupEventListeners) ...
-
 // --- Global Variables ---
 let auth;
 let db;
@@ -7,7 +5,7 @@ let serverTimestamp;
 let currentUserId = null; 
 let allDeals = []; 
 let dealStatusChart = null; 
-let allTodos = []; // NEW: Array to hold all To-Do items
+let allTodos = []; 
 
 // Storage for imported Firebase Modular Functions
 let authFns = {};
@@ -48,10 +46,9 @@ const convertedAmountDisplay = document.getElementById('converted-amount');
 const newTodoInput = document.getElementById('new-todo-input');
 const todoListUL = document.getElementById('todo-list');
 
-
 const kanbanStatuses = ['Prospective', 'Cold', 'Warm', 'Hot', 'In Progress', 'Closed-Won'];
 
-// NEW: Status Colors Map (Must match CSS)
+// Status Colors Map (Must match CSS)
 const statusColors = {
     'Prospective': '#3498db',
     'Cold': '#9b59b6',
@@ -69,7 +66,7 @@ function setupEventListeners() {
     document.getElementById('show-signup')?.addEventListener('click', () => { loginContainer?.classList.add('hidden'); signupContainer?.classList.remove('hidden'); });
     document.getElementById('show-login')?.addEventListener('click', () => { signupContainer?.classList.add('hidden'); loginContainer?.classList.remove('hidden'); });
 
-    // Auth Actions
+    // Auth Actions - CRITICAL: Ensure these buttons are correctly targeted
     document.getElementById('login-btn')?.addEventListener('click', handleLogin);
     document.getElementById('signup-btn')?.addEventListener('click', handleSignup);
     document.getElementById('logout-btn')?.addEventListener('click', handleLogout);
@@ -94,10 +91,10 @@ function setupEventListeners() {
     // Deal List Modal
     document.getElementById('close-deal-list-modal')?.addEventListener('click', () => dealListModal?.classList.add('hidden'));
     
-    // NEW: Search/Filter Listener
+    // Search/Filter Listener
     dealSearchInput?.addEventListener('input', () => renderDealsInModal(dealSearchInput.value)); 
     
-    // NEW: Quick Status Change Listener (Delegation for select elements)
+    // Quick Status Change Listener (Delegation for select elements)
     dealsListBody?.addEventListener('change', (e) => {
         if (e.target.classList.contains('quick-status-change')) {
             const docId = e.target.getAttribute('data-doc-id');
@@ -141,12 +138,12 @@ function setupEventListeners() {
         list.addEventListener('drop', handleDrop);
     });
     
-    // NEW: REPORT LISTENERS
+    // REPORT LISTENERS
     document.getElementById('open-report-btn')?.addEventListener('click', showReportModal);
     document.getElementById('cancel-report-btn')?.addEventListener('click', hideReportModal);
     document.getElementById('send-report-btn')?.addEventListener('click', sendReport);
 
-    // NEW: CALCULATOR LISTENERS
+    // CALCULATOR LISTENERS
     document.getElementById('open-calculator-btn')?.addEventListener('click', showCalculatorModal);
     document.getElementById('cancel-calc-btn')?.addEventListener('click', hideCalculatorModal);
     document.getElementById('convert-btn')?.addEventListener('click', performConversion);
@@ -154,13 +151,12 @@ function setupEventListeners() {
         button.addEventListener('click', handleCalculatorInput);
     });
 
-    // NEW: TO-DO LISTENERS
+    // TO-DO LISTENERS
     document.getElementById('add-todo-btn')?.addEventListener('click', addTodoItem);
     newTodoInput?.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') addTodoItem();
     });
     todoListUL?.addEventListener('click', handleTodoActions);
-
 }
 
 
@@ -189,7 +185,46 @@ export function setupApp(authService, dbService, timestampService, authFunctions
     setupAuthStateObserver(); 
 }
 
-// ... (Keep existing AUTHENTICATION HANDLERS) ...
+// -------------------------------------------------------------------
+// --- AUTHENTICATION HANDLERS ---
+// -------------------------------------------------------------------
+
+async function handleLogin() {
+    const email = document.getElementById('login-email').value;
+    const password = document.getElementById('login-password').value;
+    
+    if (!email || !password) {
+        alert("Please enter both email and password.");
+        return;
+    }
+
+    try {
+        // This is the CRITICAL line that calls the Firebase Auth function
+        await authFns.signInWithEmailAndPassword(auth, email, password);
+    } catch (error) {
+        alert("Login Failed: " + error.message);
+    }
+}
+
+async function handleSignup() {
+    const email = document.getElementById('signup-email').value;
+    const password = document.getElementById('signup-password').value;
+    
+    if (password.length < 6) {
+         alert("Password must be at least 6 characters long.");
+        return;
+    }
+
+    try {
+        await authFns.createUserWithEmailAndPassword(auth, email, password);
+    } catch (error) {
+        alert("Signup Failed: " + error.message);
+    }
+}
+
+function handleLogout() {
+    authFns.signOut(auth);
+}
 
 function setupAuthStateObserver() {
     authFns.onAuthStateChanged(auth, async (user) => {
@@ -202,27 +237,321 @@ function setupAuthStateObserver() {
             listenForDeals();
             loadStickyNote();
             initializeChart();
-            listenForTodos(); // NEW: Start listening for To-Dos
+            listenForTodos(); 
             
         } else {
             currentUserId = null;
             dashboardContainer?.classList.add('hidden');
-            // Hide the move/form modals if they were open
+            // Hide all modals/forms when logging out
             dealInputForm?.classList.add('hidden');
             moveDealModal?.classList.add('hidden');
+            reportModal?.classList.add('hidden');
+            calculatorModal?.classList.add('hidden');
             modalBackdrop?.classList.add('hidden');
             loginContainer?.classList.remove('hidden');
         }
     });
 }
 
-// ... (Keep existing DEAL INPUT FORM LOGIC, DEAL ACTION LOGIC) ...
 
-// --- DATA LOGIC (UPDATED with Chart/Cache) ---
+// -------------------------------------------------------------------
+// --- DEAL INPUT FORM LOGIC ---
+// -------------------------------------------------------------------
 
-// ... (Keep existing initializeChart and createDealCard) ...
+function showAddDealForm(initialStatus, dealData = null) {
+    if (dealInitialStatusInput) {
+        dealInitialStatusInput.value = initialStatus; 
+    }
+    
+    document.getElementById('deal-doc-id').value = dealData ? dealData.id : '';
+    document.getElementById('deal-client-name').value = dealData ? dealData.clientName : '';
+    document.getElementById('deal-car-model').value = dealData ? dealData.carModel : '';
+    document.getElementById('deal-car-year').value = dealData ? dealData.carYear : '';
+    document.getElementById('deal-car-color').value = dealData ? dealData.carColor : '';
+    document.getElementById('deal-value').value = dealData ? dealData.value : '';
+    document.getElementById('deal-deposit').value = dealData && dealData.deposit !== undefined ? dealData.deposit : '0'; 
 
-/** UPDATED: Updates the summary panel (Counters) based on the current allDeals cache. */
+    const formTitle = document.querySelector('#deal-input-form h2');
+    if (dealData) {
+        formTitle.textContent = `Edit Deal: ${dealData.clientName}`;
+    } else {
+        formTitle.textContent = `Add Deal to: ${initialStatus}`;
+    }
+
+    dealInputForm?.classList.remove('hidden');
+    modalBackdrop?.classList.remove('hidden');
+}
+
+function hideAddDealForm() {
+    document.getElementById('deal-doc-id').value = '';
+    dealInputForm?.classList.add('hidden');
+    modalBackdrop?.classList.add('hidden');
+}
+
+async function createOrUpdateDeal() {
+    const docId = document.getElementById('deal-doc-id').value;
+    const clientName = document.getElementById('deal-client-name').value.trim();
+    const carModel = document.getElementById('deal-car-model').value.trim();
+    const carYear = document.getElementById('deal-car-year').value.trim();
+    const carColor = document.getElementById('deal-car-color').value.trim();
+    const value = parseFloat(document.getElementById('deal-value').value) || 0;
+    const deposit = parseFloat(document.getElementById('deal-deposit').value) || 0;
+    
+    let status = '';
+    if (docId) {
+        status = allDeals.find(d => d.id === docId)?.status || 'Prospective';
+    } else {
+        status = document.getElementById('deal-initial-status')?.value || 'Prospective';
+    }
+    
+    if (!clientName || !carModel || !carYear || !carColor || value <= 0) {
+        alert("Please fill in all required fields (Client Name, Car Model, Year, Color, and Budget > 0).");
+        return;
+    }
+
+    const dealData = {
+        userId: currentUserId,
+        clientName: clientName,
+        carModel: carModel,
+        carYear: parseInt(carYear),
+        carColor: carColor,
+        value: value, 
+        deposit: deposit,
+        status: status,
+        updatedAt: serverTimestamp()
+    };
+    
+    try {
+        let dealRef;
+        if (docId) {
+            // Update existing deal
+            dealRef = dbFns.doc(db, 'deals', docId);
+            await dbFns.setDoc(dealRef, dealData, { merge: true });
+            alert(`Deal for ${clientName} updated!`);
+        } else {
+            // Create new deal
+            dealRef = dbFns.doc(dbFns.collection(db, 'deals')); 
+            await dbFns.setDoc(dealRef, { ...dealData, createdAt: serverTimestamp() });
+            alert(`New deal for ${clientName} added!`);
+        }
+        
+        hideAddDealForm();
+    } catch (error) {
+        alert("Error saving deal: " + error.message);
+    }
+}
+
+
+// -------------------------------------------------------------------
+// --- DEAL ACTION LOGIC (DRAG & DROP, MOVE, DELETE) ---
+// -------------------------------------------------------------------
+
+async function deleteDeal(docId) {
+    if (!confirm("Are you sure you want to delete this deal? This action cannot be undone.")) {
+        return;
+    }
+    
+    try {
+        await dbFns.deleteDoc(dbFns.doc(db, 'deals', docId));
+        alert('Deal deleted successfully!');
+    } catch (error) {
+        alert('Error deleting deal: ' + error.message);
+    }
+}
+
+async function moveDealToNewStatus(docId) {
+    dealToMoveIdInput.value = docId;
+            
+    statusButtonsContainer.innerHTML = '';
+    kanbanStatuses.forEach(status => {
+        const button = document.createElement('button');
+        button.className = 'btn status-btn';
+        button.textContent = status;
+        button.setAttribute('data-new-status', status);
+        button.style.backgroundColor = statusColors[status]; 
+        statusButtonsContainer.appendChild(button);
+    });
+
+    moveDealModal?.classList.remove('hidden');
+    modalBackdrop?.classList.remove('hidden');
+}
+
+async function handleStatusSelection(e) {
+    const button = e.target.closest('.status-btn');
+    if (!button) return;
+
+    const newStatus = button.getAttribute('data-new-status');
+    const docId = dealToMoveIdInput.value;
+
+    if (docId && newStatus) {
+        try {
+            const dealRef = dbFns.doc(db, 'deals', docId);
+            await dbFns.setDoc(dealRef, { status: newStatus }, { merge: true });
+            alert(`Deal moved to ${newStatus}!`);
+        } catch (error) {
+            alert('Error moving deal: ' + error.message);
+        }
+    }
+    
+    hideMoveDealModal();
+}
+
+async function handleStatusQuickChange(docId, newStatus) {
+    if (!docId || !newStatus) return;
+
+    try {
+        const dealRef = dbFns.doc(db, 'deals', docId);
+        await dbFns.setDoc(dealRef, { status: newStatus }, { merge: true });
+        // The onSnapshot listener will handle the UI update
+    } catch (error) {
+        alert('Error updating deal status: ' + error.message);
+    }
+}
+
+function hideMoveDealModal() {
+    moveDealModal?.classList.add('hidden');
+    modalBackdrop?.classList.add('hidden');
+    dealToMoveIdInput.value = '';
+}
+
+let draggedDealId = null;
+
+function handleDragStart(e) {
+    draggedDealId = e.target.getAttribute('data-deal-id');
+    e.dataTransfer.setData('text/plain', draggedDealId);
+    e.target.classList.add('dragging');
+}
+
+async function handleDrop(e) {
+    e.preventDefault();
+    const docId = e.dataTransfer.getData('text/plain');
+    
+    document.querySelector('.dragging')?.classList.remove('dragging');
+    
+    const targetList = e.target.closest('.deal-list');
+    
+    if (targetList) {
+        const newStatus = targetList.getAttribute('data-status');
+        
+        try {
+            const dealRef = dbFns.doc(db, 'deals', docId);
+            await dbFns.setDoc(dealRef, { status: newStatus }, { merge: true });
+            // The onSnapshot listener will handle the UI update
+        } catch (error) {
+             alert('Error moving deal: ' + error.message);
+        }
+    }
+    draggedDealId = null;
+}
+
+
+// -------------------------------------------------------------------
+// --- DATA LOGIC (KANBAN, CHART, SUMMARY) ---
+// -------------------------------------------------------------------
+
+function initializeChart() {
+    const ctx = document.getElementById('deal-status-chart').getContext('2d');
+    
+    if (dealStatusChart) {
+        dealStatusChart.destroy(); 
+    }
+
+    dealStatusChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: [],
+            datasets: [{
+                data: [],
+                backgroundColor: [],
+                hoverOffset: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                },
+                title: {
+                    display: true,
+                    text: 'Deal Status Distribution',
+                    font: { size: 16 }
+                }
+            }
+        }
+    });
+}
+
+function updateChart() {
+    if (!dealStatusChart) return;
+    
+    const statusCounts = kanbanStatuses.reduce((acc, status) => ({ ...acc, [status]: 0 }), {});
+    allDeals.forEach(deal => {
+        if (kanbanStatuses.includes(deal.status)) {
+            statusCounts[deal.status]++;
+        }
+    });
+
+    const labels = kanbanStatuses.filter(status => statusCounts[status] > 0);
+    const data = labels.map(status => statusCounts[status]);
+    const backgroundColors = labels.map(status => statusColors[status]);
+    
+    dealStatusChart.data.labels = labels;
+    dealStatusChart.data.datasets[0].data = data;
+    dealStatusChart.data.datasets[0].backgroundColor = backgroundColors;
+    
+    dealStatusChart.update();
+}
+
+function createDealCard(deal) {
+    const card = document.createElement('div');
+    card.className = 'deal-card';
+    card.setAttribute('draggable', 'true');
+    card.setAttribute('data-deal-id', deal.id);
+    card.setAttribute('data-status', deal.status); 
+    
+    card.addEventListener('dragstart', handleDragStart);
+
+    // Add click listener for the action buttons
+    card.addEventListener('click', (e) => {
+        const btn = e.target.closest('.deal-action-btn');
+        if (!btn) return;
+        
+        const cardDocId = btn.getAttribute('data-doc-id');
+        const action = btn.getAttribute('data-action');
+        const dealData = allDeals.find(d => d.id === cardDocId);
+
+        if (action === 'delete') {
+            deleteDeal(cardDocId);
+        } else if (action === 'move') {
+            moveDealToNewStatus(cardDocId);
+        } else if (action === 'edit') {
+            showAddDealForm(dealData.status, dealData);
+        }
+    });
+
+
+    const carDetailsString = `${deal.carColor} ${deal.carYear} ${deal.carModel}`;
+
+    let depositInfo = '';
+    if (deal.status === 'In Progress' && deal.deposit > 0) {
+        depositInfo = `<p><strong>Deposit:</strong> <span class="brand-color">$${deal.deposit.toLocaleString()}</span></p>`;
+    }
+
+    card.innerHTML = `
+        <div class="deal-actions">
+            <button class="deal-action-btn edit-btn" data-doc-id="${deal.id}" data-action="edit" title="Edit Deal">✏️</button>
+            <button class="deal-action-btn delete-btn" data-doc-id="${deal.id}" data-action="delete" title="Delete Deal">🗑️</button>
+            <button class="deal-action-btn move-btn" data-doc-id="${deal.id}" data-action="move" title="Move Deal">➡️</button>
+        </div>
+        <p><strong>Client:</strong> ${deal.clientName}</p>
+        <p><strong>Car:</strong> ${carDetailsString}</p>
+        <p><strong>Budget:</strong> $${deal.value.toLocaleString()}</p>
+        ${depositInfo}
+    `;
+    return card;
+}
+
 function updateDashboardSummary() {
     const totalDeals = allDeals.length;
     const totalValue = allDeals.reduce((sum, deal) => sum + deal.value, 0);
@@ -239,38 +568,26 @@ function updateDashboardSummary() {
 }
 
 
-/** Listens to Firestore for real-time deal updates. (No change needed here) */
 function listenForDeals() {
     if (!currentUserId) return;
     const dealsQuery = dbFns.query(dbFns.collection(db, 'deals'), dbFns.where('userId', '==', currentUserId));
-    // ... (Keep existing onSnapshot logic and calls to updateDashboardSummary, updateChart) ...
+
     dbFns.onSnapshot(dealsQuery, (snapshot) => {
+        // Clear all kanban columns before re-rendering
         document.querySelectorAll('.deal-list').forEach(list => list.innerHTML = '');
         
-        snapshot.docChanges().forEach(change => {
-            const deal = { ...change.doc.data(), id: change.doc.id };
-            
-            if (change.type === 'added' || change.type === 'modified') {
-                // Update allDeals cache
-                const existingIndex = allDeals.findIndex(d => d.id === deal.id);
-                if (existingIndex > -1) {
-                    allDeals[existingIndex] = deal;
-                } else {
-                    allDeals.push(deal);
-                }
-                
-                // Update UI card (re-render)
-                const columnElement = document.querySelector(`.deal-list[data-status="${deal.status}"]`);
-                document.querySelector(`[data-deal-id=\"${deal.id}\"]`)?.remove();
-                if (columnElement) {
-                    columnElement.appendChild(createDealCard(deal));
-                }
+        // Reset and rebuild the allDeals cache based on the current snapshot
+        const newAllDeals = [];
+        snapshot.docs.forEach(doc => {
+            newAllDeals.push({ ...doc.data(), id: doc.id });
+        });
+        allDeals = newAllDeals;
 
-            } else if (change.type === 'removed') {
-                // Remove from allDeals cache
-                allDeals = allDeals.filter(d => d.id !== deal.id);
-                // Remove from UI
-                document.querySelector(`[data-deal-id=\"${deal.id}\"]`)?.remove();
+        // Re-render all deals into their correct columns
+        allDeals.forEach(deal => {
+            const columnElement = document.querySelector(`.deal-list[data-status="${deal.status}"]`);
+            if (columnElement) {
+                columnElement.appendChild(createDealCard(deal));
             }
         });
         
@@ -281,9 +598,99 @@ function listenForDeals() {
     });
 }
 
-// ... (Keep existing DRAG AND DROP HANDLERS, STICKY NOTE LOGIC, DEAL LIST MODAL FUNCTIONS) ...
+// -------------------------------------------------------------------
+// --- STICKY NOTE LOGIC ---
+// -------------------------------------------------------------------
 
+async function loadStickyNote() {
+    if (!currentUserId) return;
+    const noteRef = dbFns.doc(db, 'stickynotes', currentUserId);
+    try {
+        const docSnap = await dbFns.getDoc(noteRef);
+        if (docSnap.exists()) {
+            document.getElementById('sticky-note-input').value = docSnap.data().content || '';
+        } else {
+             document.getElementById('sticky-note-input').value = '';
+        }
+    } catch (error) {
+         console.error("Error loading note:", error);
+    }
+}
+
+async function saveStickyNote() {
+    if (!currentUserId) return;
+    const content = document.getElementById('sticky-note-input').value;
+    try {
+        await dbFns.setDoc(dbFns.doc(db, 'stickynotes', currentUserId), {
+            userId: currentUserId,
+            content: content,
+            updatedAt: serverTimestamp()
+        }, { merge: true });
+        alert("Note saved successfully!");
+    } catch (error) {
+        alert("Error saving note: " + error.message);
+    }
+}
+
+
+// -------------------------------------------------------------------
+// --- DEAL LIST MODAL FUNCTIONS ---
+// -------------------------------------------------------------------
+
+function openDealListModal(status) {
+    document.getElementById('deal-list-modal-title').textContent = `${status} Deals (${allDeals.filter(d => d.status === status).length})`;
+    dealListModal.setAttribute('data-current-status', status); 
+    dealSearchInput.value = ''; 
+
+    renderDealsInModal('');
+    dealListModal.classList.remove('hidden');
+}
+
+function renderDealsInModal(searchTerm = '') {
+    const status = dealListModal.getAttribute('data-current-status');
+    searchTerm = searchTerm.toLowerCase().trim();
+    
+    let deals = allDeals.filter(d => d.status === status);
+    
+    if (searchTerm) {
+        deals = deals.filter(deal => 
+            deal.clientName.toLowerCase().includes(searchTerm) ||
+            deal.carModel.toLowerCase().includes(searchTerm) ||
+            deal.carYear.toString().includes(searchTerm)
+        );
+    }
+    
+    dealsListBody.innerHTML = deals.length > 0
+        ? deals.map(createDealItemInModal).join('')
+        : '<p style="text-align: center; color: #777; padding: 20px;">No matching deals found.</p>';
+}
+
+function createDealItemInModal(deal) {
+    const statusOptions = kanbanStatuses.map(s => 
+        `<option value="${s}" ${s === deal.status ? 'selected' : ''}>${s}</option>`
+    ).join('');
+    
+    return `
+        <div class="deal-item-modal">
+            <div class="deal-details">
+                <strong style="color: ${statusColors[deal.status]}">${deal.clientName}</strong>
+                <small>${deal.carModel} (${deal.carYear}) | Budget: $${deal.value.toLocaleString()}</small>
+            </div>
+            <div class="deal-actions-modal">
+                <select class="quick-status-change" data-doc-id="${deal.id}">
+                    ${statusOptions}
+                </select>
+                <button class="deal-action-btn edit-btn" data-doc-id="${deal.id}" data-action="edit" title="Edit Deal">✏️</button>
+                <button class="deal-action-btn delete-btn" data-doc-id="${deal.id}" data-action="delete" title="Delete Deal">🗑️</button>
+            </div>
+        </div>
+    `;
+}
+
+
+// -------------------------------------------------------------------
 // --- NEW FEATURE: WEEKLY REPORT (Mailto) ---
+// -------------------------------------------------------------------
 
 function showReportModal() {
     reportModal?.classList.remove('hidden');
@@ -312,12 +719,28 @@ function sendReport() {
     hideReportModal();
 }
 
+// -------------------------------------------------------------------
 // --- NEW FEATURE: CALCULATOR & CONVERTER ---
+// -------------------------------------------------------------------
+
+let calculatorState = '0';
+let waitingForSecondOperand = false;
+let pendingOperator = null;
+let operand = null;
+
+function updateCalculatorDisplay(value) {
+    calcDisplay.value = value.toString().substring(0, 16); // Limit to 16 characters
+    calculatorState = value.toString();
+}
 
 function showCalculatorModal() {
     calculatorModal?.classList.remove('hidden');
     modalBackdrop?.classList.remove('hidden');
-    calcDisplay.value = '0'; // Reset calculator display
+    updateCalculatorDisplay('0'); // Reset calculator display
+    calculatorState = '0';
+    waitingForSecondOperand = false;
+    pendingOperator = null;
+    operand = null;
 }
 
 function hideCalculatorModal() {
@@ -328,26 +751,73 @@ function hideCalculatorModal() {
 function handleCalculatorInput(e) {
     const input = e.target.getAttribute('data-input');
     
-    let currentDisplay = calcDisplay.value === '0' ? '' : calcDisplay.value;
-    
     if (input === 'C') {
-        calcDisplay.value = '0';
-    } else if (input === '<') { // DEL
-        calcDisplay.value = currentDisplay.slice(0, -1) || '0';
-    } else if (input === '=') {
-        try {
-            // Use eval for basic arithmetic, but wrap it for safety
-            calcDisplay.value = Function('return ' + currentDisplay.replace(/[^-()\d/*+.]/g, ''))();
-        } catch {
-            calcDisplay.value = 'Error';
+        updateCalculatorDisplay('0');
+        calculatorState = '0';
+        waitingForSecondOperand = false;
+        pendingOperator = null;
+        operand = null;
+        return;
+    } 
+    
+    if (input === '<') { // DEL
+        updateCalculatorDisplay(calculatorState.length > 1 ? calculatorState.slice(0, -1) : '0');
+        return;
+    }
+
+    if (['+', '-', '*', '/'].includes(input)) {
+        handleOperator(input);
+        return;
+    }
+
+    if (input === '=') {
+        handleOperator(pendingOperator);
+        pendingOperator = null;
+        waitingForSecondOperand = false;
+        return;
+    }
+
+    if (input === '.') {
+        if (waitingForSecondOperand) {
+            updateCalculatorDisplay('0.');
+            waitingForSecondOperand = false;
+        } else if (!calculatorState.includes('.')) {
+            updateCalculatorDisplay(calculatorState + '.');
         }
-    } else if (['+', '-', '*', '/'].includes(input)) {
-        // Prevent multiple operators in a row
-        if (!['+', '-', '*', '/'].includes(currentDisplay.slice(-1))) {
-            calcDisplay.value = currentDisplay + input;
-        }
+        return;
+    }
+
+    // Handle number input
+    if (waitingForSecondOperand) {
+        updateCalculatorDisplay(input);
+        waitingForSecondOperand = false;
     } else {
-        calcDisplay.value = currentDisplay + input;
+        updateCalculatorDisplay(calculatorState === '0' ? input : calculatorState + input);
+    }
+}
+
+function handleOperator(nextOperator) {
+    const inputValue = parseFloat(calculatorState);
+
+    if (operand === null) {
+        operand = inputValue;
+    } else if (pendingOperator) {
+        const result = performCalculation(operand, inputValue, pendingOperator);
+        updateCalculatorDisplay(result);
+        operand = result;
+    }
+
+    waitingForSecondOperand = true;
+    pendingOperator = nextOperator;
+}
+
+function performCalculation(first, second, operator) {
+    switch (operator) {
+        case '+': return first + second;
+        case '-': return first - second;
+        case '*': return first * second;
+        case '/': return second === 0 ? 'Error' : first / second;
+        default: return second;
     }
 }
 
@@ -365,15 +835,16 @@ function performConversion() {
 }
 
 
+// -------------------------------------------------------------------
 // --- NEW FEATURE: TO-DO LIST (Firestore Integration) ---
+// -------------------------------------------------------------------
 
-/** Listens to Firestore for real-time to-do updates. */
 function listenForTodos() {
     if (!currentUserId) return;
     const todosQuery = dbFns.query(
         dbFns.collection(db, 'todos'), 
         dbFns.where('userId', '==', currentUserId),
-        dbFns.orderBy('createdAt', 'asc') // Order by creation time
+        dbFns.orderBy('createdAt', 'asc') 
     );
 
     dbFns.onSnapshot(todosQuery, (snapshot) => {
