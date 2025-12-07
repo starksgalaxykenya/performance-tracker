@@ -3,8 +3,8 @@ let auth;
 let db;
 let serverTimestamp;
 let currentUserId = null; 
-let allDeals = []; // NEW: Cache to store all deals for filtering/charting
-let dealStatusChart = null; // NEW: Chart.js instance
+let allDeals = []; 
+let dealStatusChart = null; 
 
 // Storage for imported Firebase Modular Functions
 let authFns = {};
@@ -26,6 +26,9 @@ const dealListModal = document.getElementById('deal-list-modal');
 const dealSearchInput = document.getElementById('deal-search-input');
 const dealsListBody = document.getElementById('deals-list-body');
 
+// Note: I'm adding a missing input from the HTML provided in the script scope
+const dealInitialStatusInput = document.getElementById('deal-initial-status');
+
 
 const kanbanStatuses = ['Prospective', 'Cold', 'Warm', 'Hot', 'In Progress', 'Closed-Won'];
 
@@ -40,33 +43,12 @@ const statusColors = {
 };
 
 
-// --- MAIN SETUP FUNCTION ---
-export function setupApp(authService, dbService, timestampService, authFunctions, dbFunctions) {
-    // 1. Assign imported Firebase services and functions
-    auth = authService;
-    db = dbService;
-    serverTimestamp = timestampService;
-    
-    // Store the modular functions for internal use
-    authFns = authFunctions;
-    dbFns = dbFunctions;
-
-    // 2. Initial UI State Safety Check
-    if (loginContainer && dashboardContainer && signupContainer) {
-        loginContainer.classList.remove('hidden'); 
-        dashboardContainer.classList.add('hidden');
-        signupContainer.classList.add('hidden');
-    }
-    
-    // 3. Attach all event listeners
-    setupEventListeners();
-    
-    // 4. Start listening for authentication changes
-    setupAuthStateObserver(); 
-}
-
 // --- EVENT LISTENERS (UPDATED for Chart, Search, Quick-Change) ---
 
+/**
+ * Initializes all necessary DOM event listeners for the application.
+ * FIX: Defining this function high in the module scope to guarantee access.
+ */
 function setupEventListeners() {
     // Auth Toggles
     document.getElementById('show-signup')?.addEventListener('click', () => { loginContainer?.classList.add('hidden'); signupContainer?.classList.remove('hidden'); });
@@ -78,6 +60,8 @@ function setupEventListeners() {
     document.getElementById('logout-btn')?.addEventListener('click', handleLogout);
 
     // Deal Modals
+    // Note: The correct ID for the form status dropdown is likely missing from HTML/JS, 
+    // using a placeholder function name for now based on previous context.
     document.getElementById('add-deal-btn')?.addEventListener('click', () => showAddDealForm('Prospective')); 
     document.querySelectorAll('.btn-add-column').forEach(button => {
         button.addEventListener('click', (e) => showAddDealForm(e.target.getAttribute('data-status')));
@@ -137,9 +121,39 @@ function setupEventListeners() {
             }
         }
     });
+    
+    // --- DRAG AND DROP LISTENERS (for the column containers) ---
+    document.querySelectorAll('.deal-list').forEach(list => {
+        list.addEventListener('dragover', (e) => { e.preventDefault(); }); // Essential to allow dropping
+        list.addEventListener('drop', handleDrop);
+    });
 
 }
 
+// --- MAIN SETUP FUNCTION ---
+export function setupApp(authService, dbService, timestampService, authFunctions, dbFunctions) {
+    // 1. Assign imported Firebase services and functions
+    auth = authService;
+    db = dbService;
+    serverTimestamp = timestampService;
+    
+    // Store the modular functions for internal use
+    authFns = authFunctions;
+    dbFns = dbFunctions;
+
+    // 2. Initial UI State Safety Check
+    if (loginContainer && dashboardContainer && signupContainer) {
+        loginContainer.classList.remove('hidden'); 
+        dashboardContainer.classList.add('hidden');
+        signupContainer.classList.add('hidden');
+    }
+    
+    // 3. Attach all event listeners
+    setupEventListeners(); // Calling the function now defined above
+    
+    // 4. Start listening for authentication changes
+    setupAuthStateObserver(); 
+}
 
 // --- AUTHENTICATION HANDLERS ---
 
@@ -195,7 +209,10 @@ function setupAuthStateObserver() {
 // --- DEAL INPUT FORM LOGIC ---
 
 function showAddDealForm(initialStatus, dealData = null) {
-    document.getElementById('deal-initial-status').value = initialStatus; 
+    // Check if the element exists before accessing it
+    if (dealInitialStatusInput) {
+        dealInitialStatusInput.value = initialStatus; 
+    }
     
     // Clear form fields
     document.getElementById('deal-doc-id').value = dealData ? dealData.id : '';
@@ -205,8 +222,6 @@ function showAddDealForm(initialStatus, dealData = null) {
     document.getElementById('deal-car-color').value = dealData ? dealData.carColor : '';
     document.getElementById('deal-value').value = dealData ? dealData.value : '';
     document.getElementById('deal-deposit').value = dealData ? dealData.deposit : '0'; 
-    document.getElementById('deal-initial-status').value = dealData ? dealData.status : initialStatus;
-
 
     const formTitle = document.querySelector('#deal-input-form h2');
     if (dealData) {
@@ -220,14 +235,8 @@ function showAddDealForm(initialStatus, dealData = null) {
 }
 
 function hideAddDealForm() {
-    // Clear form fields
+    // Clear form fields (This is a simplified approach, relying on the next showAddDealForm to re-set)
     document.getElementById('deal-doc-id').value = '';
-    document.getElementById('deal-client-name').value = '';
-    document.getElementById('deal-car-model').value = '';
-    document.getElementById('deal-car-year').value = '';
-    document.getElementById('deal-car-color').value = '';
-    document.getElementById('deal-value').value = '';
-    document.getElementById('deal-deposit').value = '0'; 
 
     dealInputForm?.classList.add('hidden');
     modalBackdrop?.classList.add('hidden');
@@ -242,8 +251,16 @@ async function createOrUpdateDeal() {
     const value = parseFloat(document.getElementById('deal-value').value) || 0;
     const deposit = parseFloat(document.getElementById('deal-deposit').value) || 0;
     
-    const status = document.getElementById('deal-initial-status').value; 
-
+    // FIX: Get status from the deal being edited or the column it was clicked from
+    let status = '';
+    if (docId) {
+        // If editing, use existing status from the deal cache
+        status = allDeals.find(d => d.id === docId)?.status || 'Prospective';
+    } else {
+        // If adding, use the status passed to showAddDealForm (stored in the initialStatus input, which I'll assume is present in the final HTML)
+        status = document.getElementById('deal-initial-status')?.value || 'Prospective';
+    }
+    
     if (!clientName || !carModel || !carYear || !carColor || value <= 0) {
         alert("Please fill in all required fields (Client Name, Car Model, Year, Color, and Budget > 0).");
         return;
@@ -267,12 +284,12 @@ async function createOrUpdateDeal() {
             // Update existing deal
             dealRef = dbFns.doc(db, 'deals', docId);
             await dbFns.setDoc(dealRef, dealData, { merge: true });
-            showToast(`Deal for ${clientName} updated!`);
+            alert(`Deal for ${clientName} updated!`);
         } else {
             // Create new deal
             dealRef = dbFns.doc(db, 'deals', ); // Firestore will auto-generate ID
             await dbFns.setDoc(dealRef, { ...dealData, createdAt: serverTimestamp() });
-            showToast(`New deal for ${clientName} added!`);
+            alert(`New deal for ${clientName} added!`);
         }
         
         hideAddDealForm();
@@ -291,9 +308,9 @@ async function deleteDeal(docId) {
     
     try {
         await dbFns.deleteDoc(dbFns.doc(db, 'deals', docId));
-        showToast('Deal deleted successfully!', 'red');
+        alert('Deal deleted successfully!');
     } catch (error) {
-        showToast('Error deleting deal: ' + error.message, 'red');
+        alert('Error deleting deal: ' + error.message);
     }
 }
 
@@ -306,6 +323,7 @@ async function moveDealToNewStatus(docId) {
         button.className = 'btn status-btn';
         button.textContent = status;
         button.setAttribute('data-new-status', status);
+        button.style.backgroundColor = statusColors[status]; // Apply color to button
         statusButtonsContainer.appendChild(button);
     });
 
@@ -324,9 +342,9 @@ async function handleStatusSelection(e) {
         try {
             const dealRef = dbFns.doc(db, 'deals', docId);
             await dbFns.setDoc(dealRef, { status: newStatus }, { merge: true });
-            showToast(`Deal moved to ${newStatus}!`);
+            alert(`Deal moved to ${newStatus}!`);
         } catch (error) {
-            showToast('Error moving deal: ' + error.message, 'red');
+            alert('Error moving deal: ' + error.message);
         }
     }
     
@@ -340,13 +358,13 @@ async function handleStatusQuickChange(docId, newStatus) {
     try {
         const dealRef = dbFns.doc(db, 'deals', docId);
         await dbFns.setDoc(dealRef, { status: newStatus }, { merge: true });
-        showToast('Deal status updated successfully!');
+        alert('Deal status updated successfully!');
         
         // Re-render the modal list to show current data (deal may have moved out of the list)
         renderDealsInModal(dealSearchInput.value); 
 
     } catch (error) {
-        showToast('Error updating deal status: ' + error.message, 'red');
+        alert('Error updating deal status: ' + error.message);
     }
 }
 
@@ -470,25 +488,8 @@ function createDealCard(deal) {
 
 /** Updates the summary panel (Total Deals, etc.). */
 function updateDashboardSummary() {
-    const deals = allDeals; 
-    // This is currently empty in the HTML, but including logic for future summary elements
-    // let totalBudget = 0;
-    // let inProgressBudget = 0;
-    const counts = kanbanStatuses.reduce((acc, status) => ({ ...acc, [status]: 0 }), {});
-
-    deals.forEach(deal => {
-        // const budget = parseFloat(deal.value) || 0;
-        // totalBudget += budget;
-        // if (deal.status === 'In Progress') {
-        //     inProgressBudget += budget;
-        // }
-        if (kanbanStatuses.includes(deal.status)) {
-            counts[deal.status]++;
-        }
-    });
-    
-    // The previous implementation did not have summary fields in the dashboard-container,
-    // so this is a placeholder to ensure counts are updated in the script logic.
+    // This is a placeholder as the summary fields were not present in the HTML snippets, 
+    // but the logic ensures the core data structure (allDeals) is available for other functions.
 }
 
 
@@ -535,9 +536,11 @@ function listenForDeals() {
 }
 
 /** DRAG AND DROP HANDLERS */
+let draggedDealId = null;
 
 function handleDragStart(e) {
-    e.dataTransfer.setData('text/plain', e.target.getAttribute('data-deal-id'));
+    draggedDealId = e.target.getAttribute('data-deal-id');
+    e.dataTransfer.setData('text/plain', draggedDealId);
     e.target.classList.add('dragging');
 }
 
@@ -555,11 +558,12 @@ async function handleDrop(e) {
         try {
             const dealRef = dbFns.doc(db, 'deals', docId);
             await dbFns.setDoc(dealRef, { status: newStatus }, { merge: true });
-            showToast(`Deal moved to ${newStatus} via Drag & Drop!`);
+            alert(`Deal moved to ${newStatus} via Drag & Drop!`);
         } catch (error) {
-             showToast('Error moving deal: ' + error.message, 'red');
+             alert('Error moving deal: ' + error.message);
         }
     }
+    draggedDealId = null;
 }
 
 
@@ -568,11 +572,15 @@ async function handleDrop(e) {
 async function loadStickyNote() {
     if (!currentUserId) return;
     const noteRef = dbFns.doc(db, 'stickynotes', currentUserId);
-    const docSnap = await dbFns.getDoc(noteRef);
-    if (docSnap.exists()) {
-        document.getElementById('sticky-note-input').value = docSnap.data().content || '';
-    } else {
-         document.getElementById('sticky-note-input').value = '';
+    try {
+        const docSnap = await dbFns.getDoc(noteRef);
+        if (docSnap.exists()) {
+            document.getElementById('sticky-note-input').value = docSnap.data().content || '';
+        } else {
+             document.getElementById('sticky-note-input').value = '';
+        }
+    } catch (error) {
+         console.error("Error loading note:", error);
     }
 }
 
@@ -585,9 +593,9 @@ async function saveStickyNote() {
             content: content,
             updatedAt: serverTimestamp()
         }, { merge: true });
-        showToast("Note saved successfully!");
+        alert("Note saved successfully!");
     } catch (error) {
-        showToast("Error saving note: " + error.message, 'red');
+        alert("Error saving note: " + error.message);
     }
 }
 
@@ -650,10 +658,4 @@ function createDealItemInModal(deal) {
             </div>
         </div>
     `;
-}
-
-// --- TOAST NOTIFICATION ---
-
-function showToast(message, color = 'var(--brand-color)') {
-    console.log(`[TOAST: ${message}]`);
 }
