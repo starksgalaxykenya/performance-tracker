@@ -6,7 +6,7 @@ let currentUserId = null;
 let allDeals = []; 
 let dealStatusChart = null; 
 let allTodos = []; 
-let allSessionNotes = []; // 🌟 NEW: Array to hold all session notes
+let allSessionNotes = []; // NEW: Array to hold all session notes
 
 // Storage for imported Firebase Modular Functions
 let authFns = {};
@@ -34,7 +34,7 @@ const totalDealsCount = document.getElementById('total-deals-count');
 const totalDealsValue = document.getElementById('total-deals-value');
 const closedDealsCount = document.getElementById('closed-deals-count');
 const totalClosedValue = document.getElementById('total-closed-value');
-const dealNotesInput = document.getElementById('deal-notes'); // 🌟 NEW: Deal Notes
+const dealNotesInput = document.getElementById('deal-notes'); // 🌟 NEW: Deal Notes Input
 const stickyNoteInput = document.getElementById('sticky-note-input'); // Session Note Input
 const sessionNotesContainer = document.getElementById('session-notes-container'); // Session Notes Container
 
@@ -112,7 +112,7 @@ function setupAuthStateObserver() {
             dashboardContainer?.classList.remove('hidden');
             
             listenForDeals();
-            listenForSessionNotes(); // 🌟 UPDATED
+            listenForSessionNotes(); // 🌟 NEW: Start listening for session notes
             initializeChart();
             listenForTodos(); 
             
@@ -270,14 +270,14 @@ function showAddDealForm(initialStatus, dealData = null) {
     
     document.getElementById('deal-doc-id').value = dealData ? dealData.id : '';
     document.getElementById('deal-client-name').value = dealData ? dealData.clientName : '';
-    document.getElementById('deal-client-phone').value = dealData ? dealData.clientPhone : '';
+    document.getElementById('deal-client-phone').value = dealData ? dealData.clientPhone || '' : ''; // NEW: Handle phone
     document.getElementById('deal-car-model').value = dealData ? dealData.carModel : '';
     document.getElementById('deal-car-year').value = dealData ? dealData.carYear : '';
     document.getElementById('deal-car-color').value = dealData ? dealData.carColor : '';
     document.getElementById('deal-value').value = dealData ? dealData.value : '';
     document.getElementById('deal-deposit').value = dealData && dealData.deposit !== undefined ? dealData.deposit : '0'; 
     
-    // 🌟 UPDATED: Load notes
+    // 🌟 NEW: Load notes
     if (dealNotesInput) {
         dealNotesInput.value = dealData ? dealData.notes || '' : '';
     }
@@ -302,13 +302,13 @@ function hideAddDealForm() {
 async function createOrUpdateDeal() {
     const docId = document.getElementById('deal-doc-id').value;
     const clientName = document.getElementById('deal-client-name').value.trim();
-    const clientPhone = document.getElementById('deal-client-phone').value.trim();
+    const clientPhone = document.getElementById('deal-client-phone').value.trim(); // 🌟 NEW: Get phone
     const carModel = document.getElementById('deal-car-model').value.trim();
     const carYear = document.getElementById('deal-car-year').value.trim();
     const carColor = document.getElementById('deal-car-color').value.trim();
     const value = parseFloat(document.getElementById('deal-value').value) || 0;
     const deposit = parseFloat(document.getElementById('deal-deposit').value) || 0;
-    const notes = dealNotesInput.value.trim(); // 🌟 UPDATED: Get notes
+    const notes = dealNotesInput.value.trim(); // 🌟 NEW: Get notes
     
     let status = '';
     if (docId) {
@@ -325,14 +325,14 @@ async function createOrUpdateDeal() {
     const dealData = {
         userId: currentUserId,
         clientName: clientName,
-        clientPhone: clientPhone,
+        clientPhone: clientPhone, // 🌟 NEW: Save phone
         carModel: carModel,
         carYear: parseInt(carYear),
         carColor: carColor,
         value: value, 
         deposit: deposit,
         status: status,
-        notes: notes, // 🌟 UPDATED: Save notes
+        notes: notes, // 🌟 NEW: Save notes
         updatedAt: serverTimestamp()
     };
     
@@ -550,11 +550,11 @@ function createDealCard(deal) {
 
 
     const carDetailsString = `${deal.carColor} ${deal.carYear} ${deal.carModel}`;
-
-    let depositInfo = '';
-    if (deal.status === 'In Progress' && deal.deposit > 0) {
-        depositInfo = `<p><strong>Deposit:</strong> <span class="brand-color">$${deal.deposit.toLocaleString()}</span></p>`;
-    }
+    const balance = (deal.value - deal.deposit).toFixed(0).toLocaleString(); // 🌟 NEW: Balance calculation
+    const deposit = deal.deposit.toFixed(0).toLocaleString();
+    
+    let dealNotesSnippet = deal.notes ? `<p class="deal-note-snippet">${deal.notes.substring(0, 50)}${deal.notes.length > 50 ? '...' : ''}</p>` : '';
+    let phoneInfo = deal.clientPhone ? `<p><strong>Phone:</strong> ${deal.clientPhone}</p>` : '';
 
     card.innerHTML = `
         <div class="deal-actions">
@@ -563,9 +563,12 @@ function createDealCard(deal) {
             <button class="deal-action-btn move-btn" data-doc-id="${deal.id}" data-action="move" title="Move Deal">➡️</button>
         </div>
         <p><strong>Client:</strong> ${deal.clientName}</p>
+        ${phoneInfo}
         <p><strong>Car:</strong> ${carDetailsString}</p>
-        <p><strong>Budget:</strong> $${deal.value.toLocaleString()}</p>
-        ${depositInfo}
+        <p><strong>Value:</strong> $${deal.value.toLocaleString()}</p>
+        <p><strong>Deposit:</strong> <span class="brand-color">$${deposit}</span></p>
+        <p><strong>Balance:</strong> <span>$${balance}</span></p>
+        ${dealNotesSnippet}
     `;
     return card;
 }
@@ -617,7 +620,7 @@ function listenForDeals() {
 }
 
 // -------------------------------------------------------------------
-// --- SESSION NOTES LOGIC (Refactored from Sticky Note) ---
+// --- SESSION NOTES LOGIC (Sticky Notes as Cards) ---
 // -------------------------------------------------------------------
 
 function createNoteCard(note) {
@@ -696,7 +699,8 @@ function listenForSessionNotes() {
     if (!currentUserId) return;
     const notesQuery = dbFns.query(
         dbFns.collection(db, 'session_notes'), 
-        dbFns.where('userId', '==', currentUserId)
+        dbFns.where('userId', '==', currentUserId),
+        dbFns.orderBy('createdAt', 'desc') // Ensure newest notes are first
     );
 
     dbFns.onSnapshot(notesQuery, (snapshot) => {
@@ -923,6 +927,7 @@ function listenForTodos() {
     );
 
     dbFns.onSnapshot(todosQuery, (snapshot) => {
+        // This function executes instantly when the DB changes, fulfilling the "instantly once created" request.
         allTodos = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         renderTodos();
     }, error => {
@@ -932,7 +937,7 @@ function listenForTodos() {
 
 function renderTodos() {
     if (!todoListUL) return;
-    // This template includes the required checkbox and delete button
+    // The render function ensures the checkbox and delete button are present
     todoListUL.innerHTML = allTodos.map(todo => `
         <li data-doc-id="${todo.id}" class="${todo.completed ? 'completed' : ''}">
             <input type="checkbox" ${todo.completed ? 'checked' : ''} data-action="toggle">
