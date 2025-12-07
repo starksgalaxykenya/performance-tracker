@@ -47,7 +47,6 @@ const statusColors = {
 
 /**
  * Initializes all necessary DOM event listeners for the application.
- * FIX: Defining this function high in the module scope to guarantee access.
  */
 function setupEventListeners() {
     // Auth Toggles
@@ -60,8 +59,6 @@ function setupEventListeners() {
     document.getElementById('logout-btn')?.addEventListener('click', handleLogout);
 
     // Deal Modals
-    // Note: The correct ID for the form status dropdown is likely missing from HTML/JS, 
-    // using a placeholder function name for now based on previous context.
     document.getElementById('add-deal-btn')?.addEventListener('click', () => showAddDealForm('Prospective')); 
     document.querySelectorAll('.btn-add-column').forEach(button => {
         button.addEventListener('click', (e) => showAddDealForm(e.target.getAttribute('data-status')));
@@ -149,7 +146,7 @@ export function setupApp(authService, dbService, timestampService, authFunctions
     }
     
     // 3. Attach all event listeners
-    setupEventListeners(); // Calling the function now defined above
+    setupEventListeners(); 
     
     // 4. Start listening for authentication changes
     setupAuthStateObserver(); 
@@ -242,8 +239,6 @@ function hideAddDealForm() {
     modalBackdrop?.classList.add('hidden');
 }
 
-// --- Replace the function in script.js with this entire block ---
-
 async function createOrUpdateDeal() {
     const docId = document.getElementById('deal-doc-id').value;
     const clientName = document.getElementById('deal-client-name').value.trim();
@@ -288,8 +283,8 @@ async function createOrUpdateDeal() {
             await dbFns.setDoc(dealRef, dealData, { merge: true });
             alert(`Deal for ${clientName} updated!`);
         } else {
-            // FIX: Correctly call doc() by passing a collection reference 
-            // to generate a new unique document ID within the 'deals' collection.
+            // ✅ FIX: This is the critical line. It correctly uses dbFns.doc() with a collection reference 
+            // to generate a new ID, resolving the "Invalid document reference" error.
             dealRef = dbFns.doc(dbFns.collection(db, 'deals')); 
             await dbFns.setDoc(dealRef, { ...dealData, createdAt: serverTimestamp() });
             alert(`New deal for ${clientName} added!`);
