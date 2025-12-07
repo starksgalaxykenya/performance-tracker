@@ -59,14 +59,83 @@ const statusColors = {
 };
 
 
+// -------------------------------------------------------------------
+// --- AUTHENTICATION HANDLERS (MOVED TO THE TOP TO FIX REFERENCE ERROR) ---
+// -------------------------------------------------------------------
+
+async function handleLogin() {
+    const email = document.getElementById('login-email').value;
+    const password = document.getElementById('login-password').value;
+    
+    if (!email || !password) {
+        alert("Please enter both email and password.");
+        return;
+    }
+
+    try {
+        await authFns.signInWithEmailAndPassword(auth, email, password);
+    } catch (error) {
+        alert("Login Failed: " + error.message);
+    }
+}
+
+async function handleSignup() {
+    const email = document.getElementById('signup-email').value;
+    const password = document.getElementById('signup-password').value;
+    
+    if (password.length < 6) {
+         alert("Password must be at least 6 characters long.");
+        return;
+    }
+
+    try {
+        await authFns.createUserWithEmailAndPassword(auth, email, password);
+    } catch (error) {
+        alert("Signup Failed: " + error.message);
+    }
+}
+
+function handleLogout() {
+    authFns.signOut(auth);
+}
+
+function setupAuthStateObserver() {
+    authFns.onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            currentUserId = user.uid;
+            loginContainer?.classList.add('hidden');
+            signupContainer?.classList.add('hidden');
+            dashboardContainer?.classList.remove('hidden');
+            
+            listenForDeals();
+            loadStickyNote();
+            initializeChart();
+            listenForTodos(); 
+            
+        } else {
+            currentUserId = null;
+            dashboardContainer?.classList.add('hidden');
+            // Hide all modals/forms when logging out
+            dealInputForm?.classList.add('hidden');
+            moveDealModal?.classList.add('hidden');
+            reportModal?.classList.add('hidden');
+            calculatorModal?.classList.add('hidden');
+            modalBackdrop?.classList.add('hidden');
+            loginContainer?.classList.remove('hidden');
+        }
+    });
+}
+
+// -------------------------------------------------------------------
 // --- EVENT LISTENERS ---
+// -------------------------------------------------------------------
 
 function setupEventListeners() {
     // Auth Toggles
     document.getElementById('show-signup')?.addEventListener('click', () => { loginContainer?.classList.add('hidden'); signupContainer?.classList.remove('hidden'); });
     document.getElementById('show-login')?.addEventListener('click', () => { signupContainer?.classList.add('hidden'); loginContainer?.classList.remove('hidden'); });
 
-    // Auth Actions - CRITICAL: Ensure these buttons are correctly targeted
+    // Auth Actions - CRITICAL: These now correctly reference the functions defined above
     document.getElementById('login-btn')?.addEventListener('click', handleLogin);
     document.getElementById('signup-btn')?.addEventListener('click', handleSignup);
     document.getElementById('logout-btn')?.addEventListener('click', handleLogout);
@@ -184,75 +253,6 @@ export function setupApp(authService, dbService, timestampService, authFunctions
     // 4. Start listening for authentication changes
     setupAuthStateObserver(); 
 }
-
-// -------------------------------------------------------------------
-// --- AUTHENTICATION HANDLERS ---
-// -------------------------------------------------------------------
-
-async function handleLogin() {
-    const email = document.getElementById('login-email').value;
-    const password = document.getElementById('login-password').value;
-    
-    if (!email || !password) {
-        alert("Please enter both email and password.");
-        return;
-    }
-
-    try {
-        // This is the CRITICAL line that calls the Firebase Auth function
-        await authFns.signInWithEmailAndPassword(auth, email, password);
-    } catch (error) {
-        alert("Login Failed: " + error.message);
-    }
-}
-
-async function handleSignup() {
-    const email = document.getElementById('signup-email').value;
-    const password = document.getElementById('signup-password').value;
-    
-    if (password.length < 6) {
-         alert("Password must be at least 6 characters long.");
-        return;
-    }
-
-    try {
-        await authFns.createUserWithEmailAndPassword(auth, email, password);
-    } catch (error) {
-        alert("Signup Failed: " + error.message);
-    }
-}
-
-function handleLogout() {
-    authFns.signOut(auth);
-}
-
-function setupAuthStateObserver() {
-    authFns.onAuthStateChanged(auth, async (user) => {
-        if (user) {
-            currentUserId = user.uid;
-            loginContainer?.classList.add('hidden');
-            signupContainer?.classList.add('hidden');
-            dashboardContainer?.classList.remove('hidden');
-            
-            listenForDeals();
-            loadStickyNote();
-            initializeChart();
-            listenForTodos(); 
-            
-        } else {
-            currentUserId = null;
-            dashboardContainer?.classList.add('hidden');
-            // Hide all modals/forms when logging out
-            dealInputForm?.classList.add('hidden');
-            moveDealModal?.classList.add('hidden');
-            reportModal?.classList.add('hidden');
-            calculatorModal?.classList.add('hidden');
-            modalBackdrop?.classList.add('hidden');
-            loginContainer?.classList.remove('hidden');
-        }
-    });
-}
-
 
 // -------------------------------------------------------------------
 // --- DEAL INPUT FORM LOGIC ---
