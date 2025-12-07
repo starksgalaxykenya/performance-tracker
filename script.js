@@ -242,6 +242,8 @@ function hideAddDealForm() {
     modalBackdrop?.classList.add('hidden');
 }
 
+// --- Replace the function in script.js with this entire block ---
+
 async function createOrUpdateDeal() {
     const docId = document.getElementById('deal-doc-id').value;
     const clientName = document.getElementById('deal-client-name').value.trim();
@@ -251,13 +253,13 @@ async function createOrUpdateDeal() {
     const value = parseFloat(document.getElementById('deal-value').value) || 0;
     const deposit = parseFloat(document.getElementById('deal-deposit').value) || 0;
     
-    // FIX: Get status from the deal being edited or the column it was clicked from
+    // Get status from the deal being edited or the column it was clicked from
     let status = '';
     if (docId) {
         // If editing, use existing status from the deal cache
         status = allDeals.find(d => d.id === docId)?.status || 'Prospective';
     } else {
-        // If adding, use the status passed to showAddDealForm (stored in the initialStatus input, which I'll assume is present in the final HTML)
+        // If adding, use the status from the hidden input
         status = document.getElementById('deal-initial-status')?.value || 'Prospective';
     }
     
@@ -286,8 +288,9 @@ async function createOrUpdateDeal() {
             await dbFns.setDoc(dealRef, dealData, { merge: true });
             alert(`Deal for ${clientName} updated!`);
         } else {
-            // Create new deal
-            dealRef = dbFns.doc(db, 'deals', ); // Firestore will auto-generate ID
+            // FIX: Correctly call doc() by passing a collection reference 
+            // to generate a new unique document ID within the 'deals' collection.
+            dealRef = dbFns.doc(dbFns.collection(db, 'deals')); 
             await dbFns.setDoc(dealRef, { ...dealData, createdAt: serverTimestamp() });
             alert(`New deal for ${clientName} added!`);
         }
