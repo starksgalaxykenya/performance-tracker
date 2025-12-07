@@ -6,6 +6,7 @@ let currentUserId = null;
 let allDeals = []; 
 let dealStatusChart = null; 
 let allTodos = []; 
+let allSessionNotes = []; // 🌟 NEW: Array to hold all session notes
 
 // Storage for imported Firebase Modular Functions
 let authFns = {};
@@ -33,6 +34,9 @@ const totalDealsCount = document.getElementById('total-deals-count');
 const totalDealsValue = document.getElementById('total-deals-value');
 const closedDealsCount = document.getElementById('closed-deals-count');
 const totalClosedValue = document.getElementById('total-closed-value');
+const dealNotesInput = document.getElementById('deal-notes'); // 🌟 NEW: Deal Notes
+const stickyNoteInput = document.getElementById('sticky-note-input'); // Session Note Input
+const sessionNotesContainer = document.getElementById('session-notes-container'); // Session Notes Container
 
 const reportModal = document.getElementById('weekly-report-modal');
 const reportTextInput = document.getElementById('report-text');
@@ -108,7 +112,7 @@ function setupAuthStateObserver() {
             dashboardContainer?.classList.remove('hidden');
             
             listenForDeals();
-            loadStickyNote();
+            listenForSessionNotes(); // 🌟 UPDATED
             initializeChart();
             listenForTodos(); 
             
@@ -135,7 +139,7 @@ function setupEventListeners() {
     document.getElementById('show-signup')?.addEventListener('click', () => { loginContainer?.classList.add('hidden'); signupContainer?.classList.remove('hidden'); });
     document.getElementById('show-login')?.addEventListener('click', () => { signupContainer?.classList.add('hidden'); loginContainer?.classList.remove('hidden'); });
 
-    // Auth Actions - CRITICAL: These now correctly reference the functions defined above
+    // Auth Actions
     document.getElementById('login-btn')?.addEventListener('click', handleLogin);
     document.getElementById('signup-btn')?.addEventListener('click', handleSignup);
     document.getElementById('logout-btn')?.addEventListener('click', handleLogout);
@@ -150,8 +154,9 @@ function setupEventListeners() {
     document.getElementById('submit-deal-btn')?.addEventListener('click', createOrUpdateDeal);
     document.getElementById('cancel-deal-btn')?.addEventListener('click', hideAddDealForm);
 
-    // Sticky Note
-    document.getElementById('save-note-btn')?.addEventListener('click', saveStickyNote);
+    // Sticky Note 🌟 UPDATED: Listener for adding new note card
+    document.getElementById('save-note-btn')?.addEventListener('click', addSessionNote);
+    sessionNotesContainer?.addEventListener('click', handleNoteActions); // 🌟 NEW: Listener for deleting notes
     
     // Move Deal Modal
     document.getElementById('cancel-move-btn')?.addEventListener('click', hideMoveDealModal);
@@ -265,12 +270,17 @@ function showAddDealForm(initialStatus, dealData = null) {
     
     document.getElementById('deal-doc-id').value = dealData ? dealData.id : '';
     document.getElementById('deal-client-name').value = dealData ? dealData.clientName : '';
-    document.getElementById('deal-client-phone').value = dealData ? dealData.clientPhone : ''; // 🌟 UPDATED: Load phone number
+    document.getElementById('deal-client-phone').value = dealData ? dealData.clientPhone : '';
     document.getElementById('deal-car-model').value = dealData ? dealData.carModel : '';
     document.getElementById('deal-car-year').value = dealData ? dealData.carYear : '';
     document.getElementById('deal-car-color').value = dealData ? dealData.carColor : '';
     document.getElementById('deal-value').value = dealData ? dealData.value : '';
     document.getElementById('deal-deposit').value = dealData && dealData.deposit !== undefined ? dealData.deposit : '0'; 
+    
+    // 🌟 UPDATED: Load notes
+    if (dealNotesInput) {
+        dealNotesInput.value = dealData ? dealData.notes || '' : '';
+    }
 
     const formTitle = document.querySelector('#deal-input-form h2');
     if (dealData) {
@@ -292,12 +302,13 @@ function hideAddDealForm() {
 async function createOrUpdateDeal() {
     const docId = document.getElementById('deal-doc-id').value;
     const clientName = document.getElementById('deal-client-name').value.trim();
-    const clientPhone = document.getElementById('deal-client-phone').value.trim(); // 🌟 UPDATED: Get phone number
+    const clientPhone = document.getElementById('deal-client-phone').value.trim();
     const carModel = document.getElementById('deal-car-model').value.trim();
     const carYear = document.getElementById('deal-car-year').value.trim();
     const carColor = document.getElementById('deal-car-color').value.trim();
     const value = parseFloat(document.getElementById('deal-value').value) || 0;
     const deposit = parseFloat(document.getElementById('deal-deposit').value) || 0;
+    const notes = dealNotesInput.value.trim(); // 🌟 UPDATED: Get notes
     
     let status = '';
     if (docId) {
@@ -314,13 +325,14 @@ async function createOrUpdateDeal() {
     const dealData = {
         userId: currentUserId,
         clientName: clientName,
-        clientPhone: clientPhone, // 🌟 UPDATED: Save phone number
+        clientPhone: clientPhone,
         carModel: carModel,
         carYear: parseInt(carYear),
         carColor: carColor,
         value: value, 
         deposit: deposit,
         status: status,
+        notes: notes, // 🌟 UPDATED: Save notes
         updatedAt: serverTimestamp()
     };
     
@@ -605,37 +617,94 @@ function listenForDeals() {
 }
 
 // -------------------------------------------------------------------
-// --- STICKY NOTE LOGIC ---
+// --- SESSION NOTES LOGIC (Refactored from Sticky Note) ---
 // -------------------------------------------------------------------
 
-async function loadStickyNote() {
-    if (!currentUserId) return;
-    const noteRef = dbFns.doc(db, 'stickynotes', currentUserId);
+function createNoteCard(note) {
+    const timeString = note.createdAt?.toDate ? note.createdAt.toDate().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : 'Unknown Time';
+    
+    const card = document.createElement('div');
+    card.className = 'note-card';
+    card.setAttribute('data-note-id', note.id); 
+    
+    card.innerHTML = `
+        <div class="note-header">
+            <span class="note-timestamp">${timeString}</span>
+            <button class="delete-note-btn" data-doc-id="${note.id}" data-action="delete-note">x</button>
+        </div>
+        <p>${note.content}</p>
+    `;
+    return card;
+}
+
+function renderSessionNotes() {
+    if (!sessionNotesContainer) return;
+    sessionNotesContainer.innerHTML = ''; // Clear previous notes
+    
+    // Sort notes by creation time (newest first)
+    const sortedNotes = [...allSessionNotes].sort((a, b) => {
+        const timeA = a.createdAt?.seconds || 0;
+        const timeB = b.createdAt?.seconds || 0;
+        return timeB - timeA; 
+    });
+
+    sortedNotes.forEach(note => {
+        sessionNotesContainer.appendChild(createNoteCard(note));
+    });
+}
+
+async function addSessionNote() {
+    if (!currentUserId || !stickyNoteInput) return;
+    const content = stickyNoteInput.value.trim();
+    if (!content) return;
+
     try {
-        const docSnap = await dbFns.getDoc(noteRef);
-        if (docSnap.exists()) {
-            document.getElementById('sticky-note-input').value = docSnap.data().content || '';
-        } else {
-             document.getElementById('sticky-note-input').value = '';
-        }
+        const noteData = {
+            userId: currentUserId,
+            content: content,
+            createdAt: serverTimestamp()
+        };
+        // Use a collection named 'session_notes'
+        const noteRef = dbFns.doc(dbFns.collection(db, 'session_notes')); 
+        await dbFns.setDoc(noteRef, noteData);
+        stickyNoteInput.value = ''; // Clear input after saving
     } catch (error) {
-         console.error("Error loading note:", error);
+        alert("Error adding note: " + error.message);
     }
 }
 
-async function saveStickyNote() {
-    if (!currentUserId) return;
-    const content = document.getElementById('sticky-note-input').value;
+async function deleteSessionNote(docId) {
+    if (!confirm("Are you sure you want to delete this note?")) return;
     try {
-        await dbFns.setDoc(dbFns.doc(db, 'stickynotes', currentUserId), {
-            userId: currentUserId,
-            content: content,
-            updatedAt: serverTimestamp()
-        }, { merge: true });
-        alert("Note saved successfully!");
+        await dbFns.deleteDoc(dbFns.doc(db, 'session_notes', docId));
     } catch (error) {
-        alert("Error saving note: " + error.message);
+        alert('Error deleting note: ' + error.message);
     }
+}
+
+function handleNoteActions(e) {
+    const target = e.target;
+    const action = target.getAttribute('data-action');
+    const docId = target.getAttribute('data-doc-id');
+    
+    if (action === 'delete-note' && docId) {
+        deleteSessionNote(docId);
+    }
+}
+
+function listenForSessionNotes() {
+    if (!currentUserId) return;
+    const notesQuery = dbFns.query(
+        dbFns.collection(db, 'session_notes'), 
+        dbFns.where('userId', '==', currentUserId)
+    );
+
+    dbFns.onSnapshot(notesQuery, (snapshot) => {
+        allSessionNotes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        renderSessionNotes();
+    }, error => {
+        console.error("Error loading session notes: ", error);
+    });
 }
 
 
@@ -863,6 +932,7 @@ function listenForTodos() {
 
 function renderTodos() {
     if (!todoListUL) return;
+    // This template includes the required checkbox and delete button
     todoListUL.innerHTML = allTodos.map(todo => `
         <li data-doc-id="${todo.id}" class="${todo.completed ? 'completed' : ''}">
             <input type="checkbox" ${todo.completed ? 'checked' : ''} data-action="toggle">
