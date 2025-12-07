@@ -215,11 +215,65 @@ header {
     background-color: #fff9e0; 
     border: 1px dashed #ccc;
     border-radius: 6px;
+    display: flex;
+    flex-direction: column;
 }
 
 #sticky-note-input {
     min-height: 80px;
     resize: vertical;
+    margin-bottom: 10px;
+}
+
+/* NEW: Styling for individual sticky note cards */
+.notes-container {
+    margin-top: 15px;
+    display: grid;
+    gap: 10px;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); /* Responsive grid for notes */
+}
+
+.note-card {
+    background-color: #ffffa5; /* Classic sticky note yellow */
+    padding: 10px;
+    border-radius: 4px;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+    position: relative;
+    font-size: 0.9em;
+    min-height: 100px;
+}
+
+.note-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #e0e080;
+    margin-bottom: 5px;
+    padding-bottom: 3px;
+}
+
+.note-timestamp {
+    font-size: 0.8em;
+    color: #555;
+}
+
+.delete-note-btn {
+    background: none;
+    border: none;
+    color: #e74c3c;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 1.1em;
+    line-height: 1;
+    padding: 0;
+}
+.delete-note-btn:hover {
+    color: #c0392b;
+}
+
+.note-card p {
+    margin: 0;
+    white-space: pre-wrap;
 }
 
 .dashboard-panel.todo-panel {
@@ -315,7 +369,6 @@ header {
     padding: 15px 20px; 
     border-radius: 6px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    /* Removed align-self: flex-start; to ensure height matching */
 }
 
 .summary-panel h3 {
