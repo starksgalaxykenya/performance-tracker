@@ -112,7 +112,7 @@ header {
     justify-content: space-between;
     align-items: center;
     padding: 10px 0;
-    margin-bottom: 10px; /* Reduced margin */
+    margin-bottom: 10px;
     border-bottom: 3px solid var(--brand-color);
 }
 
@@ -311,26 +311,30 @@ header {
 .summary-panel {
     flex: 1.5;
     background-color: var(--card-bg);
-    padding: 20px;
+    /* REDUCED PADDING for smaller height */
+    padding: 15px 20px; 
     border-radius: 6px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    /* align-self: flex-start;  <--- REMOVED this line */
+    /* Removed align-self: flex-start; to ensure height matching */
 }
 
 .summary-panel h3 {
     margin-top: 0;
     border-bottom: 1px solid #eee;
-    padding-bottom: 10px;
+    padding-bottom: 5px; /* Reduced padding */
+    margin-bottom: 5px; /* Added margin */
 }
 
 .summary-panel p {
-    margin: 8px 0;
+    /* REDUCED MARGIN for smaller height */
+    margin: 5px 0;
 }
 
 .chart-container {
     flex: 1; 
     background-color: var(--card-bg);
-    padding: 20px;
+    /* REDUCED PADDING for smaller height to match summary */
+    padding: 15px 20px;
     border-radius: 6px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
