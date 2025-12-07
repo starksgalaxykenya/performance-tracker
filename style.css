@@ -309,12 +309,12 @@ header {
 }
 
 .summary-panel {
-    flex: 1.5; /* INCREASED SIZE to 1.5 parts */
+    flex: 1.5;
     background-color: var(--card-bg);
     padding: 20px;
     border-radius: 6px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    align-self: flex-start; 
+    /* align-self: flex-start;  <--- REMOVED this line */
 }
 
 .summary-panel h3 {
@@ -328,7 +328,7 @@ header {
 }
 
 .chart-container {
-    flex: 1; /* REDUCED SIZE to 1 part */
+    flex: 1; 
     background-color: var(--card-bg);
     padding: 20px;
     border-radius: 6px;
